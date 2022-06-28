@@ -82,7 +82,7 @@ namespace TorchSharp
                         /// <summary>
                         ///   Implements the .NET Dispose pattern.
                         /// </summary>
-                        protected virtual void Dispose(bool disposing)
+                        private void Dispose(bool disposing)
                         {
                             if (disposing && handle != null && !handle.IsInvalid) {
                                 handle.Dispose();
