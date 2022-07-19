@@ -12,8 +12,8 @@ namespace TorchSharp.Examples
             //SequenceToSequence.Main(args);
             //TextClassification.Main(args);
             //ImageTransforms.Main(args);
-            //SpeechCommands.Main(args);
-            IOReadWrite.Main(args);
+            SpeechCommands.Main(args);
+            //IOReadWrite.Main(args);
         }
     }
 }
