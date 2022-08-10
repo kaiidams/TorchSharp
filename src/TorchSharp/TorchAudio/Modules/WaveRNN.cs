@@ -154,18 +154,13 @@ namespace TorchSharp.Modules
 
         private static Tensor repeat_interleave(Tensor input, int repeats, int dim)
         {
-            var input_dim = input.dim();
-            var shape = new long[input_dim + 1];
-            Array.Copy(input.shape, shape, input_dim + dim);
-            shape[input_dim + dim] = 1;
-            Array.Copy(input.shape, input_dim + dim, shape, input_dim + dim + 1, -dim);
-            var output = input.reshape(shape);
-            var repeats_array = new long[shape.Length];
+            var output = input.unsqueeze(dim);
+            var repeats_array = new long[output.dim()];
             for (int i = 0; i < repeats_array.Length; i++) repeats_array[i] = 1;
-            repeats_array[input_dim + dim] = repeats;
-            output.repeat(shape);
-            shape = input.shape;
-            shape[dim] *= repeats;
+            repeats_array[repeats_array.Length + dim] = repeats;
+            output = output.repeat(repeats_array);
+            var shape = input.shape;
+            shape[shape.Length + dim] *= repeats;
             return output.reshape(shape);
         }
     }
@@ -426,7 +421,7 @@ namespace TorchSharp.Modules
         //                 is returned.
         //                 It indicates the valid length in time axis of the output Tensor.
         //         
-        public virtual (Tensor, Tensor) infer(Tensor specgram, Tensor? lengths = null)
+        public virtual (Tensor, Tensor?) infer(Tensor specgram, Tensor? lengths = null)
         {
             var device = specgram.device;
             var dtype = specgram.dtype;
@@ -435,9 +430,6 @@ namespace TorchSharp.Modules
             (specgram, aux) = this.upsample.forward(specgram);
             if (lengths is not null) {
                 lengths = lengths * this.upsample.total_scale;
-            }
-            if (lengths is null) {
-                throw new InvalidDataException();
             }
             var output = new List<Tensor>();
             long b_size = specgram.size()[0];
