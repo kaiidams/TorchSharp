@@ -85,6 +85,32 @@ namespace TorchSharp
                     postnet_embedding_dim,
                     gate_threshold);
             }
+
+            public static Modules.WaveRNN WaveRNN(
+                int[] upsample_scales,
+                int n_classes,
+                int hop_length,
+                int n_res_block = 10,
+                int n_rnn = 512,
+                int n_fc = 512,
+                int kernel_size = 5,
+                int n_freq = 128,
+                int n_hidden = 128,
+                int n_output = 128)
+            {
+                return new Modules.WaveRNN(
+                    "wavernn",
+                    upsample_scales,
+                    n_classes,
+                    hop_length,
+                    n_res_block,
+                    n_rnn,
+                    n_fc,
+                    kernel_size,
+                    n_freq,
+                    n_hidden,
+                    n_output);
+            }
         }
     }
 }

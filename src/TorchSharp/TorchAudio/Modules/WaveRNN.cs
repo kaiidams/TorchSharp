@@ -133,6 +133,7 @@ namespace TorchSharp.Modules
         {
             this.freq_scale = freq_scale;
             this.time_scale = time_scale;
+            this.RegisterComponents();
         }
 
         // Pass the input through the Stretch2d layer.
@@ -146,7 +147,26 @@ namespace TorchSharp.Modules
         public override Tensor forward(Tensor specgram)
         {
             //return specgram.repeat_interleave(this.freq_scale, -2).repeat_interleave(this.time_scale, -1);
-            return specgram;
+            var output = repeat_interleave(specgram, this.freq_scale, -2);
+            output = repeat_interleave(output, this.time_scale, -1);
+            return output;
+        }
+
+        private static Tensor repeat_interleave(Tensor input, int repeats, int dim)
+        {
+            var input_dim = input.dim();
+            var shape = new long[input_dim + 1];
+            Array.Copy(input.shape, shape, input_dim + dim);
+            shape[input_dim + dim] = 1;
+            Array.Copy(input.shape, input_dim + dim, shape, input_dim + dim + 1, -dim);
+            var output = input.reshape(shape);
+            var repeats_array = new long[shape.Length];
+            for (int i = 0; i < repeats_array.Length; i++) repeats_array[i] = 1;
+            repeats_array[input_dim + dim] = repeats;
+            output.repeat(shape);
+            shape = input.shape;
+            shape[dim] *= repeats;
+            return output.reshape(shape);
         }
     }
 
@@ -200,6 +220,7 @@ namespace TorchSharp.Modules
                 up_layers.Add(conv);
             }
             this.upsample_layers = nn.Sequential(up_layers);
+            this.RegisterComponents();
         }
 
         // Pass the input through the UpsampleNetwork layer.
@@ -288,7 +309,7 @@ namespace TorchSharp.Modules
             this.n_aux = n_output / 4;
             this.hop_length = hop_length;
             this.n_classes = n_classes;
-            this.n_bits = (int)Math.Log2(this.n_classes);
+            this.n_bits = (int)(Math.Log(this.n_classes) / Math.Log(2));
             var total_scale = 1;
             foreach (var upsample_scale in upsample_scales) {
                 total_scale *= upsample_scale;
@@ -305,6 +326,7 @@ namespace TorchSharp.Modules
             this.fc1 = nn.Linear(n_rnn + this.n_aux, n_fc);
             this.fc2 = nn.Linear(n_fc + this.n_aux, n_fc);
             this.fc3 = nn.Linear(n_fc, this.n_classes);
+            this.RegisterComponents();
         }
 
         // Pass the input through the WaveRNN model.
