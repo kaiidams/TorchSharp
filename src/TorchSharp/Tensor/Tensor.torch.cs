@@ -578,7 +578,7 @@ namespace TorchSharp
         public static Tensor repeat_interleave(Tensor input, Tensor repeats, long? dim = null, long? output_size = null) => input.repeat_interleave(repeats, dim, output_size);
 
         /// <summary>
-        /// Constructs a tensor by repeating the elements of input. The reps argument specifies the number of repetitions in each dimension.
+        /// Constructs a tensor by repeating the elements of input. The dims argument specifies the number of repetitions in each dimension.
         /// </summary>
         /// <param name="input">The input tensor</param>
         /// <param name="dims">The number of repetitions per dimension.</param>
