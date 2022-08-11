@@ -766,7 +766,7 @@ namespace TorchSharp.Modules
                     mel_specgram_lengths[~finished] += 1;
 
                     finished |= torch.sigmoid(gate_output.squeeze(1)) > this.gate_threshold;
-                    if (this.decoder_early_stopping && finished.all().item<bool>()) {
+                    if (this.decoder_early_stopping && torch.all(finished).item<bool>()) {
                         break;
                     }
 
