@@ -87,7 +87,7 @@ namespace TorchSharp
             }
 
             public static Modules.WaveRNN WaveRNN(
-                int[] upsample_scales,
+                long[] upsample_scales,
                 int n_classes,
                 int hop_length,
                 int n_res_block = 10,

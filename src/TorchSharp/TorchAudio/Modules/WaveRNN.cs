@@ -126,10 +126,10 @@ namespace TorchSharp.Modules
     //     
     public class Stretch2d : nn.Module
     {
-        public int freq_scale;
-        public int time_scale;
+        public long freq_scale;
+        public long time_scale;
 
-        public Stretch2d(string name, int time_scale, int freq_scale) : base(name)
+        public Stretch2d(string name, long time_scale, long freq_scale) : base(name)
         {
             this.freq_scale = freq_scale;
             this.time_scale = time_scale;
@@ -146,22 +146,7 @@ namespace TorchSharp.Modules
         //         
         public override Tensor forward(Tensor specgram)
         {
-            //return specgram.repeat_interleave(this.freq_scale, -2).repeat_interleave(this.time_scale, -1);
-            var output = repeat_interleave(specgram, this.freq_scale, -2);
-            output = repeat_interleave(output, this.time_scale, -1);
-            return output;
-        }
-
-        private static Tensor repeat_interleave(Tensor input, int repeats, int dim)
-        {
-            var output = input.unsqueeze(dim);
-            var repeats_array = new long[output.dim()];
-            for (int i = 0; i < repeats_array.Length; i++) repeats_array[i] = 1;
-            repeats_array[repeats_array.Length + dim] = repeats;
-            output = output.repeat(repeats_array);
-            var shape = input.shape;
-            shape[shape.Length + dim] *= repeats;
-            return output.reshape(shape);
+            return specgram.repeat_interleave(this.freq_scale, -2).repeat_interleave(this.time_scale, -1);
         }
     }
 
@@ -183,22 +168,22 @@ namespace TorchSharp.Modules
     public class UpsampleNetwork
         : nn.Module
     {
-        public readonly int indent;
+        public readonly long indent;
         public readonly MelResNet resnet;
         public readonly Stretch2d resnet_stretch;
-        public readonly int total_scale;
+        public readonly long total_scale;
         public readonly nn.Module upsample_layers;
 
         public UpsampleNetwork(
             string name,
-            int[] upsample_scales,
+            long[] upsample_scales,
             int n_res_block = 10,
             int n_freq = 128,
             int n_hidden = 128,
             int n_output = 128,
             int kernel_size = 5) : base(name)
         {
-            var total_scale = 1;
+            long total_scale = 1;
             foreach (var upsample_scale in upsample_scales) {
                 total_scale *= upsample_scale;
             }
@@ -287,7 +272,7 @@ namespace TorchSharp.Modules
 
         public WaveRNN(
             string name,
-            int[] upsample_scales,
+            long[] upsample_scales,
             int n_classes,
             int hop_length,
             int n_res_block = 10,
@@ -304,8 +289,8 @@ namespace TorchSharp.Modules
             this.n_aux = n_output / 4;
             this.hop_length = hop_length;
             this.n_classes = n_classes;
-            this.n_bits = (int)(Math.Log(this.n_classes) / Math.Log(2));
-            var total_scale = 1;
+            this.n_bits = (int)(Math.Log(this.n_classes) / Math.Log(2) + 0.5);
+            long total_scale = 1;
             foreach (var upsample_scale in upsample_scales) {
                 total_scale *= upsample_scale;
             }
@@ -354,8 +339,10 @@ namespace TorchSharp.Modules
             (specgram, aux) = this.upsample.forward(specgram);
             specgram = specgram.transpose(1, 2);
             aux = aux.transpose(1, 2);
-            var aux_idx = (from i in Enumerable.Range(0, 5)
-                           select (this.n_aux * i)).ToList();
+            var aux_idx = new long[5];
+            for (int i = 0; i < aux_idx.Length; i++) {
+                aux_idx[i] = this.n_aux * i;
+            }
             var a1 = aux[TensorIndex.Colon, TensorIndex.Colon, TensorIndex.Slice(aux_idx[0], aux_idx[1])];
             var a2 = aux[TensorIndex.Colon, TensorIndex.Colon, TensorIndex.Slice(aux_idx[1], aux_idx[2])];
             var a3 = aux[TensorIndex.Colon, TensorIndex.Colon, TensorIndex.Slice(aux_idx[2], aux_idx[3])];
