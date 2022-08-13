@@ -253,22 +253,22 @@ namespace TorchSharp.Modules
     //     
     public class WaveRNN : nn.Module
     {
-        public int _pad;
-        public nn.Module fc;
-        public nn.Module fc1;
-        public nn.Module fc2;
-        public nn.Module fc3;
-        public int hop_length;
-        public int kernel_size;
-        public int n_aux;
-        public int n_bits;
-        public int n_classes;
-        public int n_rnn;
-        public nn.Module relu1;
-        public nn.Module relu2;
-        public GRU rnn1;
-        public GRU rnn2;
-        public UpsampleNetwork upsample;
+        private readonly int _pad;
+        public readonly nn.Module fc;
+        public readonly nn.Module fc1;
+        public readonly nn.Module fc2;
+        public readonly nn.Module fc3;
+        public readonly int hop_length;
+        public readonly int kernel_size;
+        public readonly int n_aux;
+        public readonly int n_bits;
+        public readonly int n_classes;
+        public readonly int n_rnn;
+        public readonly nn.Module relu1;
+        public readonly nn.Module relu2;
+        public readonly GRU rnn1;
+        public readonly GRU rnn2;
+        public readonly UpsampleNetwork upsample;
 
         public WaveRNN(
             string name,
@@ -284,7 +284,7 @@ namespace TorchSharp.Modules
             int n_output = 128) : base(name)
         {
             this.kernel_size = kernel_size;
-            this._pad = (kernel_size % 2) == 1 ? kernel_size - 1 : kernel_size / 2;
+            this._pad = (kernel_size % 2 == 1 ? kernel_size - 1 : kernel_size) / 2;
             this.n_rnn = n_rnn;
             this.n_aux = n_output / 4;
             this.hop_length = hop_length;
@@ -347,33 +347,20 @@ namespace TorchSharp.Modules
             var a2 = aux[TensorIndex.Colon, TensorIndex.Colon, TensorIndex.Slice(aux_idx[1], aux_idx[2])];
             var a3 = aux[TensorIndex.Colon, TensorIndex.Colon, TensorIndex.Slice(aux_idx[2], aux_idx[3])];
             var a4 = aux[TensorIndex.Colon, TensorIndex.Colon, TensorIndex.Slice(aux_idx[3], aux_idx[4])];
-            var x = torch.cat(new Tensor[] {
-                waveform.unsqueeze(-1),
-                specgram,
-                a1
-            }, dimension: -1);
+            var x = torch.cat(new Tensor[] { waveform.unsqueeze(-1), specgram, a1 }, dimension: -1);
             x = this.fc.forward(x);
             var res = x;
             Tensor dummy;
             (x, dummy) = this.rnn1.forward(x, h1);
             x = x + res;
             res = x;
-            x = torch.cat(new Tensor[] {
-                x,
-                a2
-            }, dimension: -1);
+            x = torch.cat(new Tensor[] { x, a2 }, dimension: -1);
             (x, dummy) = this.rnn2.forward(x, h2);
             x = x + res;
-            x = torch.cat(new Tensor[] {
-                x,
-                a3
-            }, dimension: -1);
+            x = torch.cat(new Tensor[] { x, a3 }, dimension: -1);
             x = this.fc1.forward(x);
             x = this.relu1.forward(x);
-            x = torch.cat(new Tensor[] {
-                x,
-                a4
-            }, dimension: -1);
+            x = torch.cat(new Tensor[] { x, a4 }, dimension: -1);
             x = this.fc2.forward(x);
             x = this.relu2.forward(x);
             x = this.fc3.forward(x);
@@ -421,48 +408,49 @@ namespace TorchSharp.Modules
             var output = new List<Tensor>();
             long b_size = specgram.size()[0];
             long seq_len = specgram.size()[2];
+
             var h1 = torch.zeros(new long[] { 1, b_size, this.n_rnn }, device: device, dtype: dtype);
             var h2 = torch.zeros(new long[] { 1, b_size, this.n_rnn }, device: device, dtype: dtype);
             var x = torch.zeros(new long[] { b_size, 1 }, device: device, dtype: dtype);
+
             var aux_split = new Tensor[4];
             for (int i = 0; i < 4; i++) {
                 aux_split[i] = aux[TensorIndex.Colon, TensorIndex.Slice(this.n_aux * i, this.n_aux * (i + 1)), TensorIndex.Colon];
             }
+
             for (int i = 0; i < seq_len; i++) {
+
                 var m_t = specgram[TensorIndex.Colon, TensorIndex.Colon, i];
-                var a1_t = aux_split[0][TensorIndex.Colon, TensorIndex.Colon, 0];
-                var a2_t = aux_split[0][TensorIndex.Colon, TensorIndex.Colon, 1];
-                var a3_t = aux_split[0][TensorIndex.Colon, TensorIndex.Colon, 2];
-                var a4_t = aux_split[0][TensorIndex.Colon, TensorIndex.Colon, 3];
-                x = torch.cat(new Tensor[] {
-                    x,
-                    m_t,
-                    a1_t
-                }, dimension: 1);
+
+                var a1_t = aux_split[0][TensorIndex.Colon, TensorIndex.Colon, i];
+                var a2_t = aux_split[1][TensorIndex.Colon, TensorIndex.Colon, i];
+                var a3_t = aux_split[2][TensorIndex.Colon, TensorIndex.Colon, i];
+                var a4_t = aux_split[3][TensorIndex.Colon, TensorIndex.Colon, i];
+
+                x = torch.cat(new Tensor[] { x, m_t, a1_t }, dimension: 1);
                 x = this.fc.forward(x);
                 (_, h1) = this.rnn1.forward(x.unsqueeze(1), h1);
+
                 x = x + h1[0];
-                var inp = torch.cat(new Tensor[] {
-                    x,
-                    a2_t
-                }, dimension: 1);
+                var inp = torch.cat(new Tensor[] { x, a2_t }, dimension: 1);
                 (_, h2) = this.rnn2.forward(inp.unsqueeze(1), h2);
+
                 x = x + h2[0];
-                x = torch.cat(new Tensor[] {
-                    x,
-                    a3_t
-                }, dimension: 1);
+                x = torch.cat(new Tensor[] { x, a3_t }, dimension: 1);
                 x = F.relu(this.fc1.forward(x));
-                x = torch.cat(new Tensor[] {
-                    x,
-                    a4_t
-                }, dimension: 1);
+
+                x = torch.cat(new Tensor[] { x, a4_t }, dimension: 1);
                 x = F.relu(this.fc2.forward(x));
+
                 var logits = this.fc3.forward(x);
+
                 var posterior = F.softmax(logits, dim: 1);
+
                 x = torch.multinomial(posterior, 1).@float();
                 // Transform label [0, 2 ** n_bits - 1] to waveform [-1, 1]
-                x = 2 * x / (Math.Pow(2, this.n_bits) - 1.0) - 1.0;
+
+                x = 2 * x / ((1 << this.n_bits) - 1.0) - 1.0;
+
                 output.Add(x);
             }
             return (torch.stack(output).permute(1, 2, 0), lengths);
