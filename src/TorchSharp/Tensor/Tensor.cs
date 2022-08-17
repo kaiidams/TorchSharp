@@ -5108,6 +5108,11 @@ namespace TorchSharp
                 }
             }
 
+            public Tensor expand(Size sizes, bool isImplicit = false)
+            {
+                return expand((ReadOnlySpan<long>)sizes.Shape, isImplicit);
+            }
+
             /// <summary>
             ///  Returns a new view of the tensor with singleton dimensions expanded to a larger size.
             /// </summary>
@@ -7404,5 +7409,15 @@ namespace TorchSharp
         /// be automatically disposed once the dispose scope is disposed.
         /// </summary>
         public static DisposeScope NewDisposeScope() => DisposeScopeManager.NewDisposeScope();
+
+        /// <summary>
+        /// Creates a new dispose scope for the current thread, wrapping an expression.
+        /// </summary>
+        public static Tensor WrappedTensorDisposeScope(Func<Tensor> expr)
+        {
+            using var scope = torch.NewDisposeScope();
+            var result = expr();
+            return result.MoveToOuterDisposeScope();
+        }
     }
 }
