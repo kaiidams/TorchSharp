@@ -225,32 +225,6 @@ namespace TorchSharp.Modules
         }
     }
 
-    // WaveRNN model based on the implementation from `fatchord <https://github.com/fatchord/WaveRNN>`_.
-    // 
-    //     The original implementation was introduced in *Efficient Neural Audio Synthesis*
-    //     [:footcite:`kalchbrenner2018efficient`]. The input channels of waveform and spectrogram have to be 1.
-    //     The product of `upsample_scales` must equal `hop_length`.
-    // 
-    //     Args:
-    //         upsample_scales: the list of upsample scales.
-    //         n_classes: the number of output classes.
-    //         hop_length: the number of samples between the starts of consecutive frames.
-    //         n_res_block: the number of ResBlock in stack. (Default: ``10``)
-    //         n_rnn: the dimension of RNN layer. (Default: ``512``)
-    //         n_fc: the dimension of fully connected layer. (Default: ``512``)
-    //         kernelSize: the number of kernel size in the first Conv1d layer. (Default: ``5``)
-    //         n_freq: the number of bins in a spectrogram. (Default: ``128``)
-    //         n_hidden: the number of hidden dimensions of resblock. (Default: ``128``)
-    //         n_output: the number of output dimensions of melresnet. (Default: ``128``)
-    // 
-    //     Example
-    //         >>> wavernn = WaveRNN(upsample_scales=[5,5,8], n_classes=512, hop_length=200)
-    //         >>> waveform, sample_rate = torchaudio.load(file)
-    //         >>> # waveform shape: (n_batch, n_channel, (n_time - kernel_size + 1) * hop_length)
-    //         >>> specgram = MelSpectrogram(sample_rate)(waveform)  # shape: (n_batch, n_channel, n_freq, n_time)
-    //         >>> output = wavernn(waveform, specgram)
-    //         >>> # output shape: (n_batch, n_channel, (n_time - kernel_size + 1) * hop_length, n_classes)
-    //     
     public class WaveRNN : nn.Module
     {
         private readonly int _pad;

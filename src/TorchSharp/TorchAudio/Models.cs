@@ -1,4 +1,4 @@
-// Copyright</param>
+// Copyright (c) .NET Foundation and Contributors.  All Rights Reserved.  See LICENSE in the project root for license information.
 
 using System;
 using static TorchSharp.torch;
@@ -86,6 +86,20 @@ namespace TorchSharp
                     gate_threshold);
             }
 
+            /// <summary>
+            /// WaveRNN model based on the implementation from `fatchord https://github.com/fatchord/WaveRNN`.
+            /// </summary>
+            /// <param name="upsample_scales">The list of upsample scales.</param>
+            /// <param name="n_classes">The number of output classes.</param>
+            /// <param name="hop_length">The number of samples between the starts of consecutive frames.</param>
+            /// <param name="n_res_block">The number of ResBlock in stack.</param>
+            /// <param name="n_rnn">The dimension of RNN layer.</param>
+            /// <param name="n_fc">The dimension of fully connected layer.</param>
+            /// <param name="kernel_size">The number of kernel size in the first Conv1d layer.</param>
+            /// <param name="n_freq">The number of bins in a spectrogram.</param>
+            /// <param name="n_hidden">The number of hidden dimensions of resblock.</param>
+            /// <param name="n_output">The number of output dimensions of melresnet.</param>
+            /// <returns>The WaveRNN model</returns>
             public static Modules.WaveRNN WaveRNN(
                 long[] upsample_scales,
                 int n_classes,
